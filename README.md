@@ -1,2 +1,2 @@
-# mwa-grading-tools
-Build an auto-grading tool for Modern Web Applications
+# scale
+A suite of auto-grading tools for the Modern Web Applications course.
