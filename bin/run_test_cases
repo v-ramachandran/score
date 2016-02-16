@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from score.path.cases_path import ProjectStructure
+from score.path.project_structure import ProjectStructure
 from argparse import ArgumentParser
-from os import path
+from os import path, listdir
 
 import requests
 
@@ -24,21 +24,53 @@ def __has_correct_project_structure(project_root):
 def __has_directory(root, directory_name):
     directory_path = path.join(root, directory_name)
     if not (path.isdir(directory_path) and path.exists(directory_path)):
-        print "-- {folder_name} subfolder not present.".format(directory_name)
+        print "- {dir} directory not present in '{root}'".format(dir=directory_name, root=root)
         return False
     else:
         return True
 
 def __has_solution_for_each_case(project_root):
-    return True
+    cases_directory_path = path.join(project_root, ProjectStructure.CASES_DIR)
+    solutions_directory_path = path.join(project_root, ProjectStructure.SOLUTIONS_DIR)
+    has_all_solutions = True
+    for case_filename in listdir(cases_directory_path):
+        name, extension = path.splitext(case_filename)
+        if not (ProjectStructure.CASES_FILE_EXT == extension):
+            continue
+        solution_filename = name + ProjectStructure.SOLUTION_FILE_EXT
+        solution_file_path = path.join(solutions_directory_path, solution_filename)
+        if not (path.exists(solution_file_path) and path.isfile(solution_file_path)):
+            print "- Solution {solution} for case {case} not found".format(
+                solution=solution_filename, case=case_filename)
+            has_all_solutions = False
+    return has_all_solutions
+
+def __has_correct_project_setup(root, name):
+    has_correct_setup = True
+    if __has_directory(root, name):
+        project_root = path.join(root, name)
+        if not __has_correct_project_structure(project_root):
+            print "[ERROR] {root} does not have the correct structure".format(root=project_root)
+            has_correct_setup = False
+        else:
+            print "[SUCCESS] Verified project structure of {root}".format(root=project_root)
+        if not __has_solution_for_each_case(project_root):
+            print "[ERROR] {root} does not have a solution for each test case".format(
+                root=project_root)
+            has_correct_setup = False
+        else:
+            print "[SUCCESS] Verified a solution exists for each test case in {root}".format(
+                root=project_root)
+    else:
+        project_root = path.join(root, name)
+        print "[ERROR] Test case directory not present at {root}".format(root=project_root)
+        has_correct_setup = False
+    return has_correct_setup
 
 def main():
     parsed_args = setup_argument_parser()
-    project_root = path.join(parsed_args.directory, parsed_args.name)
-    if not __has_correct_project_structure(project_root):
-        print "ERROR: {root} does not have the correct structure.".format(project_root)
-    if not __has_solution_for_each_case(project_root):
-        print "ERROR: {root} does not have a solution for each test case".format(project_root)
+    if (__has_correct_project_setup(parsed_args.directory, parsed_args.name)):
+        return True
 
 if __name__ == '__main__':
     main()

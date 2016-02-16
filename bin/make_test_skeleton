@@ -22,10 +22,10 @@ def __setup_argument_parser():
 def __remove_tests_folder(folder_path):
     try:
         rmtree(folder_path)
-        print "- Removed tests folder at path {path}...".format(path=folder_path)
+        print "- Removed current test cases directory at {path}...".format(path=folder_path)
     except OSError as exception:
         if exception.errno == errno.ENOENT:
-            print "- No tests folder to overwrite at path {path}...".format(path=folder_path)
+            print "- No existing directory to overwrite at {path}...".format(path=folder_path)
             pass
         else:
             raise
@@ -37,6 +37,7 @@ def __create_tests_folder(folder_path):
     print "- Created cases subdirectory..."
     makedirs(path.join(folder_path, ProjectStructure.OUTPUT_DIR))
     print "- Created output subdirectory..."
+    print "[SUCCESS] Finished generating test cases skeleton"
 
 def main():
     parsed_args = __setup_argument_parser()
