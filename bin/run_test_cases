@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+from score.path.cases_path import ProjectStructure
+from argparse import ArgumentParser
+from os import path
+
+import requests
+
+def setup_argument_parser():
+  parser = ArgumentParser()
+  parser.add_argument("-d", "--directory",
+    help="Specify the directory in the test cases exist. DEFAULT: '.'",
+    default=".")
+  parser.add_argument("-n", "--name",
+    help="Specify the name of the test cases folder. DEFAULT: 'tests'",
+    default="tests")
+  return parser.parse_args()
+
+def __has_correct_project_structure(project_root):
+    return (__has_directory(project_root, ProjectStructure.SOLUTIONS_DIR) &
+        __has_directory(project_root, ProjectStructure.CASES_DIR) &
+        __has_directory(project_root, ProjectStructure.OUTPUT_DIR))
+
+def __has_directory(root, directory_name):
+    directory_path = path.join(root, directory_name)
+    if not (path.isdir(directory_path) and path.exists(directory_path)):
+        print "-- {folder_name} subfolder not present.".format(directory_name)
+        return False
+    else:
+        return True
+
+def __has_solution_for_each_case(project_root):
+    return True
+
+def main():
+    parsed_args = setup_argument_parser()
+    project_root = path.join(parsed_args.directory, parsed_args.name)
+    if not __has_correct_project_structure(project_root):
+        print "ERROR: {root} does not have the correct structure.".format(project_root)
+    if not __has_solution_for_each_case(project_root):
+        print "ERROR: {root} does not have a solution for each test case".format(project_root)
+
+if __name__ == '__main__':
+    main()
