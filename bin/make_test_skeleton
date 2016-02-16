@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+from argparse import ArgumentParser
+from os import path, makedirs
+from shutil import rmtree
+
+def __setup_argument_parser():
+    parser = ArgumentParser()
+    parser.add_argument("-p", "--path",
+        help="Specify the directory in which to create the skeleton. DEFAULT: '.'",
+        default=".")
+    parser.add_argument("-o", "--overwrite",
+        help="Overwrite any existing test folder with the same source path and name.",
+        action="store_true")
+    parser.add_argument("-n", "--name",
+        help="Specify the name of the test skeleton folder to be created. DEFAULT: '.'",
+        default="tests")
+    return parser.parse_args()
+
+def __create_tests_folder(folder_path):
+    makedirs(path.join(folder_path, "solutions"))
+    makedirs(path.join(folder_path, "cases"))
+    makedirs(path.join(folder_path, "output"))
+
+def main():
+    parsed_args = __setup_argument_parser()
+    folder_path = path.join(parsed_args.path, parsed_args.name)
+
+    if parsed_args.overwrite:
+        rmtree(folder_path)
+    __create_tests_folder(folder_path)
+
+if __name__ == '__main__':
+    main()
