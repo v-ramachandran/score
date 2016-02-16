@@ -3,6 +3,8 @@
 from argparse import ArgumentParser
 from os import path, makedirs
 from shutil import rmtree
+from score.path.project_structure import ProjectStructure
+import errno
 
 def __setup_argument_parser():
     parser = ArgumentParser()
@@ -17,17 +19,31 @@ def __setup_argument_parser():
         default="tests")
     return parser.parse_args()
 
+def __remove_tests_folder(folder_path):
+    try:
+        rmtree(folder_path)
+        print "- Removed tests folder at path {path}...".format(path=folder_path)
+    except OSError as exception:
+        if exception.errno == errno.ENOENT:
+            print "- No tests folder to overwrite at path {path}...".format(path=folder_path)
+            pass
+        else:
+            raise
+
 def __create_tests_folder(folder_path):
-    makedirs(path.join(folder_path, "solutions"))
-    makedirs(path.join(folder_path, "cases"))
-    makedirs(path.join(folder_path, "output"))
+    makedirs(path.join(folder_path, ProjectStructure.SOLUTIONS_DIR))
+    print "- Created solutions subdirectory..."
+    makedirs(path.join(folder_path, ProjectStructure.CASES_DIR))
+    print "- Created cases subdirectory..."
+    makedirs(path.join(folder_path, ProjectStructure.OUTPUT_DIR))
+    print "- Created output subdirectory..."
 
 def main():
     parsed_args = __setup_argument_parser()
     folder_path = path.join(parsed_args.path, parsed_args.name)
 
     if parsed_args.overwrite:
-        rmtree(folder_path)
+        __remove_tests_folder(folder_path)
     __create_tests_folder(folder_path)
 
 if __name__ == '__main__':
