@@ -1,24 +1,26 @@
 #!/usr/bin/env python
 
-from score.path.project_structure import ProjectStructure
 from argparse import ArgumentParser
+from fnmatch import fnmatch
 from os import path, listdir
-
-import requests
+from score.path.project_structure import ProjectStructure
+from score.case.test_case import TestCase
 
 def setup_argument_parser():
-  parser = ArgumentParser()
-  parser.add_argument("-d", "--directory",
-    help="Specify the directory in the test cases exist. DEFAULT: '.'",
-    default=".")
-  parser.add_argument("-n", "--name",
-    help="Specify the name of the test cases folder. DEFAULT: 'tests'",
-    default="tests")
-  return parser.parse_args()
+    parser = ArgumentParser()
+    parser.add_argument("-d", "--directory",
+        help="Specify the directory in the test cases exist. DEFAULT: '.'",
+        default=".")
+    parser.add_argument("-n", "--name",
+        help="Specify the name of the test cases folder. DEFAULT: 'tests'",
+        default="tests")
+    parser.add_argument("-c", "--case",
+        help="Specify the name of the individual test case to run.",
+        default=None)
+    return parser.parse_args()
 
 def __has_correct_project_structure(project_root):
-    return (__has_directory(project_root, ProjectStructure.SOLUTIONS_DIR) &
-        __has_directory(project_root, ProjectStructure.CASES_DIR) &
+    return (__has_directory(project_root, ProjectStructure.CASES_DIR) &
         __has_directory(project_root, ProjectStructure.OUTPUT_DIR))
 
 def __has_directory(root, directory_name):
@@ -29,22 +31,6 @@ def __has_directory(root, directory_name):
     else:
         return True
 
-def __has_solution_for_each_case(project_root):
-    cases_directory_path = path.join(project_root, ProjectStructure.CASES_DIR)
-    solutions_directory_path = path.join(project_root, ProjectStructure.SOLUTIONS_DIR)
-    has_all_solutions = True
-    for case_filename in listdir(cases_directory_path):
-        name, extension = path.splitext(case_filename)
-        if not (ProjectStructure.CASES_FILE_EXT == extension):
-            continue
-        solution_filename = name + ProjectStructure.SOLUTION_FILE_EXT
-        solution_file_path = path.join(solutions_directory_path, solution_filename)
-        if not (path.exists(solution_file_path) and path.isfile(solution_file_path)):
-            print "- Solution {solution} for case {case} not found".format(
-                solution=solution_filename, case=case_filename)
-            has_all_solutions = False
-    return has_all_solutions
-
 def __has_correct_project_setup(root, name):
     has_correct_setup = True
     if __has_directory(root, name):
@@ -54,13 +40,6 @@ def __has_correct_project_setup(root, name):
             has_correct_setup = False
         else:
             print "[SUCCESS] Verified project structure of {root}".format(root=project_root)
-        if not __has_solution_for_each_case(project_root):
-            print "[ERROR] {root} does not have a solution for each test case".format(
-                root=project_root)
-            has_correct_setup = False
-        else:
-            print "[SUCCESS] Verified a solution exists for each test case in {root}".format(
-                root=project_root)
     else:
         project_root = path.join(root, name)
         print "[ERROR] Test case directory not present at {root}".format(root=project_root)
@@ -70,7 +49,20 @@ def __has_correct_project_setup(root, name):
 def main():
     parsed_args = setup_argument_parser()
     if (__has_correct_project_setup(parsed_args.directory, parsed_args.name)):
-        return True
+        project_root = path.join(parsed_args.directory, parsed_args.name)
+        cases_directory_path = path.join(project_root, ProjectStructure.CASES_DIR)
+        output_directory_path = path.join(project_root, ProjectStructure.OUTPUT_DIR)
+        count = 0
+        for case_filename in listdir(cases_directory_path):
+            if fnmatch(case_filename, "*.yaml"):
+                print "- Running test case {case}".format(case=case_filename)
+                case_filepath = path.join(cases_directory_path, case_filename)
+                test_case = TestCase.from_yaml_file(case_filepath, output_directory_path)
+                output_filepath = test_case.evaluate_and_output_results()
+                print "- Finished test case {case}. Wrote results at {output}".format(
+                    case=case_filename, output=output_filepath)
+                count = count + 1
+        print "[SUCCESS] Finished running {count} test cases.".format(count=count)
 
 if __name__ == '__main__':
     main()

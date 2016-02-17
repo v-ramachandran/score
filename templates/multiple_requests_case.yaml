@@ -1,0 +1,17 @@
+---
+points: 0
+compare_responses: true
+requests:
+  - request: http://localhost:8080
+    response_expected:
+      type: json
+      value: >
+        {"hello":"world"}
+  # Expecting a response is optional. Don't include a response_expected to ignore the response.
+  - request: http://localhost:8080
+  - request: http://localhost:8080
+    response_expected:
+      type: plain
+      value: |
+        hello
+        world

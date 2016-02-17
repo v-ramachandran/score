@@ -6,6 +6,6 @@ setup(
     author = "Venketaram Ramachandran",
     author_email = "v.ram28@gmail.com",
     url = "https://v-ramachandran.github.io/score",
-    install_requires = ["requests"],
+    install_requires = ["requests","jsoncompare","PyYAML"],
     packages = find_packages()
 )

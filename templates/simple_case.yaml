@@ -1,0 +1,9 @@
+---
+points: 0
+compare_responses: true
+requests:
+  - request: http://localhost:8080
+    response:
+      type: json
+      value: |
+        {"hello":"world"}
