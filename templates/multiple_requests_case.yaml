@@ -5,7 +5,7 @@ requests:
   - request: http://localhost:8080
     response_expected:
       type: json
-      value: >
+      value: |
         {"hello":"world"}
   # Expecting a response is optional. Don't include a response_expected to ignore the response.
   - request: http://localhost:8080
