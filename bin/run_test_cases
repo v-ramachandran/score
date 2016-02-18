@@ -17,6 +17,9 @@ def setup_argument_parser():
     parser.add_argument("-c", "--case",
         help="Specify the name of the individual test case to run.",
         default=None)
+    parser.add_argument("-u", "--url",
+        help="Specify the URL to which requests will be made. DEFAULT: 'http://localhost:8080'",
+        default="http://localhost:8080")
     return parser.parse_args()
 
 def __has_correct_project_structure(project_root):
@@ -53,16 +56,20 @@ def main():
         cases_directory_path = path.join(project_root, ProjectStructure.CASES_DIR)
         output_directory_path = path.join(project_root, ProjectStructure.OUTPUT_DIR)
         count = 0
+        url_root = parsed_args.url.rstrip("/")
         for case_filename in listdir(cases_directory_path):
             if fnmatch(case_filename, "*.yaml"):
                 print "- Running test case {case}".format(case=case_filename)
                 case_filepath = path.join(cases_directory_path, case_filename)
-                test_case = TestCase.from_yaml_file(case_filepath, output_directory_path)
+                test_case = TestCase.from_yaml_file(url_root, case_filepath, output_directory_path)
                 output_filepath = test_case.evaluate_and_output_results()
                 print "- Finished test case {case}. Wrote results at {output}".format(
                     case=case_filename, output=output_filepath)
                 count = count + 1
         print "[SUCCESS] Finished running {count} test cases.".format(count=count)
+        # __generate_result_digest(output_directory_path)
+        print "[SUCCESS] Finished generating results digest at {location}".format(
+            location=path.join(cases_directory_path, "test_results.digest"))
 
 if __name__ == '__main__':
     main()

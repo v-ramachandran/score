@@ -23,17 +23,18 @@ yaml.add_representer(literal_str, represent_literal_str)
 
 class TestCase(object):
 
-    def __init__(self, case, output_filepath):
+    def __init__(self, url_root, case, output_filepath):
+        self.url_root = url_root
         self.output_filepath = output_filepath
         self.case = case
 
     @classmethod
-    def from_yaml_file(cls, case_filepath, output_directory_path):
+    def from_yaml_file(cls, url_root, case_filepath, output_directory_path):
         name, extension = path.splitext(case_filepath)
         output_filename = path.basename(name)+"_output.yaml"
         output_filepath = path.join(output_directory_path, output_filename)
         case = yaml.load(open(case_filepath))
-        return cls(case, output_filepath)
+        return cls(url_root, case, output_filepath)
 
     def evaluate_and_output_results(self):
         output_dict = {"points_available": self.case["points"], "responses":[]}
@@ -49,16 +50,9 @@ class TestCase(object):
             yaml_file.write(yaml.dump(output_dict,  default_flow_style=False))
         return self.output_filepath
 
-    def __help(self, s):
-        if isinstance(s, str):
-            print "ordinary string"
-        elif isinstance(s, unicode):
-            print "unicode string"
-        else:
-            print "not a string"
-
     def __execute_request(self,request):
-        http_response = requests.get(url=request["request"])
+        request_url = self.url_root + "/" + request["request"].lstrip("/")
+        http_response = requests.get(url=request_url)
         if request.has_key("status_code_expected"):
             status_code = request["status_code_expected"]
         else:

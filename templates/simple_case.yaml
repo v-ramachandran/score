@@ -2,8 +2,11 @@
 points: 0
 compare_responses: true
 requests:
-  - request: http://localhost:8080
-    response:
-      type: json
+  - request: /assignment1/austinsocialmedia?account_name=austinanimalcenter
+    response_expected:
+      type: plain
       value: |
-        {"hello":"world"}
+        Visited URLs
+        
+        URL Data
+        austinanimalcenter INSTAGRAM https://instagram.com/austinanimalcenter/

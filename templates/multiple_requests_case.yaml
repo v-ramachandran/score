@@ -2,16 +2,22 @@
 points: 0
 compare_responses: true
 requests:
-  - request: http://localhost:8080
-    response_expected:
-      type: json
-      value: |
-        {"hello":"world"}
-  # Expecting a response is optional. Don't include a response_expected to ignore the response.
-  - request: http://localhost:8080
-  - request: http://localhost:8080
+  - request: /assignment1/austinsocialmedia?account_name=austinanimalcenter
     response_expected:
       type: plain
       value: |
-        hello
-        world
+        Visited URLs
+
+        URL Data
+        austinanimalcenter INSTAGRAM https://instagram.com/austinanimalcenter/
+  # Expecting a response is optional. Don't include a response_expected to ignore the response.
+  - request: /assignment1/austinsocialmedia?username=venket&session=begin
+  - request: /assignment1/austinsocialmedia?account_name=austinanimalcenter
+    response_expected:
+      type: plain
+      value: |
+        Visited URLs
+
+        URL Data
+        austinanimalcenter INSTAGRAM https://instagram.com/austinanimalcenter/
+  - request: /assignment1/austinsocialmedia?username=venket&session=end
