@@ -2,3 +2,6 @@
 build
 dist
 tests
+assignments
+students.yaml
+*.pyc
