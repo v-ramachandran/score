@@ -1,6 +1,7 @@
 ---
 points: 0
 compare_responses: true
+test_goal: check if
 requests:
   - request: /assignment1/austinsocialmedia?account_name=austinanimalcenter
     response_expected:

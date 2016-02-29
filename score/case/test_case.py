@@ -1,5 +1,6 @@
 from response_type import ResponseType
 from os import path
+from score.path.file_names import case_name_to_output_name
 
 import requests
 import yaml
@@ -31,7 +32,7 @@ class TestCase(object):
     @classmethod
     def from_yaml_file(cls, url_root, case_filepath, output_directory_path):
         name, extension = path.splitext(case_filepath)
-        output_filename = path.basename(name)+"_output.yaml"
+        output_filename = case_name_to_output_name(path.basename(name))
         output_filepath = path.join(output_directory_path, output_filename)
         case = yaml.load(open(case_filepath))
         return cls(url_root, case, output_filepath)
