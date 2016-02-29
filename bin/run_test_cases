@@ -67,9 +67,9 @@ def main():
                     case=case_filename, output=output_filepath)
                 count = count + 1
         print "[SUCCESS] Finished running {count} test cases.".format(count=count)
-        # __generate_result_digest(output_directory_path)
+        digest_location = output_text_result_digest(output_directory_path)
         print "[SUCCESS] Finished generating results digest at {location}".format(
-            location=path.join(cases_directory_path, "test_results.digest"))
+            location=digest_location))
 
 if __name__ == '__main__':
     main()
