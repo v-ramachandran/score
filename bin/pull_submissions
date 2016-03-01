@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+from argparse import ArgumentParser
+from os import path, makedirs
+from shutil import rmtree
+from score.path.project_structure import ProjectStructure
+import errno
+import subprocess
+import yaml
+
+def __setup_argument_parser():
+    parser = ArgumentParser()
+    parser.add_argument("-a", "--assignment",
+        help="Specify the assignment number for which code should be pulled")
+    parser.add_argument("-s", "--students_file",
+        help="Provide the path to the YAML file containing student names, ids, and bitbucket ids.")
+    parser.add_argument("-d", "--directory",
+        help="Specify the location to which the assignments should be pulled. DEFAULT: './assignments'",
+        default="./assignments")
+    parser.add_argument("-i", "--instructor",
+        help="Specify the instructor's bitbucket id.")
+    return parser.parse_args()
+
+def __has_valid_args(parsed_args):
+    if not parsed_args.assignment:
+        print "[ERROR] Assignment number is mandatory. Use --help for options"
+        return False
+    if not parsed_args.students_file:
+        print "[ERROR] List of students YAML file necessary to pull submissions. Use --help for options"
+        return False
+    if not parsed_args.instructor:
+        print "[ERROR] Instructor bitbucket id required to pull submissions. Use --help for options"
+        return False
+    return True
+
+def __pull_submission(instructor, student, destination, assignment):
+    print "Cloning {name}\'s submission...".format(name=student["name"])
+    clone_url = 'https://{instructor}@bitbucket.org/{student}/{assignment}.git'.format(
+        instructor=instructor, student=student['bitbucketid'], assignment=assignment)
+    clone_target = path.join(destination, student['sid'])
+    clone_process = subprocess.Popen(['git',
+                                    'clone',
+                                    clone_url,
+                                    clone_target],
+                                    stderr=subprocess.PIPE,
+                                    stdout=subprocess.PIPE)
+    out, err = clone_process.communicate()
+    if clone_process.returncode:
+        print "[ERROR] Failed to clone {name}\'s submission...".format(name=student["name"])
+
+def __pull_all_submissions(instructor, students_file_path, destination, assignment):
+    students = yaml.safe_load(open(students_file_path))
+    for student in students:
+        __pull_submission(instructor, student, destination, assignment)
+
+def main():
+    parsed_args = __setup_argument_parser()
+    if __has_valid_args(parsed_args):
+        destination_root = parsed_args.directory
+        assignment_name = "assignment"+str(parsed_args.assignment)
+        submission_destination = path.join(destination_root, assignment_name)
+        if not path.isdir(submission_destination):
+            makedirs(path.join(submission_destination))
+        __pull_all_submissions(parsed_args.instructor, parsed_args.students_file,
+            submission_destination, assignment_name)
+
+if __name__ == '__main__':
+    main()
