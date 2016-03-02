@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+from argparse import ArgumentParser
+from glob import glob
+from os import path, makedirs
+from shutil import rmtree
+from score.path.project_structure import ProjectStructure
+from score.digest.result_digest import output_text_result_digest
+import errno
+import subprocess
+import yaml
+
+def __setup_argument_parser():
+    parser = ArgumentParser()
+    parser.add_argument("-a", "--assignment",
+        help="Specify the assignment number for which the digest is generated.")
+    parser.add_argument("-p", "--path",
+        help="Specify directory(-ies) in which to create digests. Can be a pattern. DEFAULT: '.'",
+        default=".")
+    parser.add_argument("-n", "--name",
+        help="Specify the name of the tests folder to parse results. DEFAULT: 'tests'",
+        default="tests")
+    return parser.parse_args()
+
+def __has_valid_args(parsed_args):
+    if not parsed_args.assignment:
+        print "[ERROR] Assignment number is mandatory. Use --help for options"
+        return False
+    return True
+
+def __pull_all_submissions(instructor, students_file_path, destination, assignment):
+    students = yaml.safe_load(open(students_file_path))
+    for student in students:
+        __pull_submission(instructor, student, destination, assignment)
+
+def main():
+    parsed_args = __setup_argument_parser()
+    if __has_valid_args(parsed_args):
+        for location in glob(parsed_args.path):
+            if not path.isdir(location):
+                continue
+            assignment_name = "assignment"+str(parsed_args.assignment)
+            tests_location = path.join(location, parsed_args.name)
+            output_location = path.join(tests_location, ProjectStructure.OUTPUT_DIR)
+            if not (path.exists(output_location) and path.isdir(output_location)):
+                print "[ERROR] Valid tests folder not present in '{root}'".format(
+                    root=output_location)
+            else:
+                digest_path = output_text_result_digest(output_location, assignment_name)
+                print "[INFO] Digest created at {digest_path}".format(digest_path=digest_path)
+
+if __name__ == '__main__':
+    main()

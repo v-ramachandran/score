@@ -1,28 +1,43 @@
 #!/usr/bin/env python
 
 from argparse import ArgumentParser
+from distutils.dir_util import copy_tree
+from glob import glob
 from os import path, makedirs
 from shutil import rmtree
+from score.path.file_names import make_assignment_case_folder
 from score.path.project_structure import ProjectStructure
 import errno
+import subprocess
 
 def __setup_argument_parser():
     parser = ArgumentParser()
     parser.add_argument("-p", "--path",
-        help="Specify the directory in which to create the skeleton. DEFAULT: '.'",
+        help="Specify directory(-ies) in which to create the skeleton. Can be a pattern. DEFAULT: '.'",
         default=".")
     parser.add_argument("-o", "--overwrite",
         help="Overwrite any existing test folder with the same source path and name.",
         action="store_true")
     parser.add_argument("-n", "--name",
-        help="Specify the name of the test skeleton folder to be created. DEFAULT: '.'",
+        help="Specify the name of the test skeleton folder to be created. DEFAULT: 'tests'",
         default="tests")
+    parser.add_argument("-s", "--source",
+        help="Specify the source git clone URL from which to clone and extract cases.",
+        default="https://github.com/v-ramachandran/modern-web-apps-grading.git")
+    parser.add_argument("-a", "--assignment",
+        help="Specify the assignment number for which code should be pulled")
     return parser.parse_args()
 
-def __remove_tests_folder(folder_path):
+def __has_valid_args(parsed_args):
+    if not parsed_args.assignment:
+        print "[ERROR] Assignment number is mandatory. Use --help for options"
+        return False
+    return True
+
+def __remove_folder(folder_path):
     try:
         rmtree(folder_path)
-        print "- Removed current test cases directory at {path}...".format(path=folder_path)
+        print "- Removed directory at {path}...".format(path=folder_path)
     except OSError as exception:
         if exception.errno == errno.ENOENT:
             print "- No existing directory to overwrite at {path}...".format(path=folder_path)
@@ -30,20 +45,39 @@ def __remove_tests_folder(folder_path):
         else:
             raise
 
-def __create_tests_folder(folder_path):
-    makedirs(path.join(folder_path, ProjectStructure.CASES_DIR))
+def __clone_cases_source(clone_url, clone_target):
+    clone_process = subprocess.Popen(['git', 'clone', clone_url, clone_target],
+                                    stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    out, err = clone_process.communicate()
+    if clone_process.returncode:
+        print "[ERROR] Failed to clone source to {destination}.".format(destination=clone_target)
+    else:
+        print "[INFO] Cloned source to {destination}.".format(destination=clone_target)
+
+def __create_tests_folder(folder_path, assignment_num):
+    cases_destination = path.join(folder_path, ProjectStructure.CASES_DIR)
+    makedirs(cases_destination)
     print "- Created cases subdirectory..."
+    assignment_cases_folder = make_assignment_case_folder(assignment_num)
+    cases_source = path.join(ProjectStructure.CLONE_TMP_FOLDER, assignment_cases_folder)
+    copy_tree(cases_source, cases_destination)
+    print "- Copied test cases to cases subdirectory..."
     makedirs(path.join(folder_path, ProjectStructure.OUTPUT_DIR))
     print "- Created output subdirectory..."
-    print "[SUCCESS] Finished generating test cases skeleton"
+    print "[SUCCESS] Finished generating test cases skeleton in {folder_path}".format(
+        folder_path=folder_path)
 
 def main():
     parsed_args = __setup_argument_parser()
-    folder_path = path.join(parsed_args.path, parsed_args.name)
-
-    if parsed_args.overwrite:
-        __remove_tests_folder(folder_path)
-    __create_tests_folder(folder_path)
+    __clone_cases_source(parsed_args.source, ProjectStructure.CLONE_TMP_FOLDER)
+    for location in glob(parsed_args.path):
+        if not path.isdir(location):
+            continue
+        folder_path = path.join(location, parsed_args.name)
+        if parsed_args.overwrite:
+            __remove_folder(folder_path)
+        __create_tests_folder(folder_path, parsed_args.assignment)
+    __remove_folder(ProjectStructure.CLONE_TMP_FOLDER)
 
 if __name__ == '__main__':
     main()

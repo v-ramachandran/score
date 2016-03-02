@@ -2,12 +2,12 @@
 summary: |
   ***** SUMMARY *****
 
-  You received %SCORE%/%POSSIBLE_SCORE. Note that late penalties have yet to be deducted from this
+  You received %SCORE%/%POSSIBLE_SCORE%. Note that late penalties have yet to be deducted from this
   score.
 
-  We ran %NUM_TESTS% test(s) against your code. If you would like to verify the results here,
-  you can use the tools found at https://github.com/v-ramachandran/score to run the cases
-  yourself.
+  We ran %NUM_TESTS% test(s) against your code. All of the test cases mentioned below for this
+  assignment can be found at https://github.com/v-ramachandran/modern-web-apps-grading/assignments
+  in the folder for %ASSIGNMENT_ID%.
 
 performance:
   header: |
@@ -15,33 +15,10 @@ performance:
 
     The following output breaks down the performance of your code against each test case.
 
-  execution: |
+  case_result: |
     *** Case %CASE_NUMBER% : %CASE_NAME%
-        Worth %CASE_POINTS% points
-        Passed %DID_PASS%
-
-    In this case, we wanted to %TEST_GOAL%. We made the request
-
-      %REQUEST%
-
-    to your application. As a response, we expected
-
-      %RESPONSE_EXPECTED%
-
-  success: |
-    Your application's response matched our expected response. You received full credit.
+        This case %GOAL%.
+        You scored %CASE_SCORE% out of %CASE_POINTS% points.
 
   failure: |
-    Your application provided a response of
-
-      %RESPONSE_RECEIVED%
-
-    This did not match our expected response. You did not receive credit for this problem.
-
-  amended_success: |
-    Your application provided a response of
-
-      %RESPONSE_RECEIVED%
-
-    Although this did not match our response, you received %AMENDED_POINTS%/%CASE_POINTS% points for
-    this test case. We reasoned that %AMENDMENT_REASON%
+        You lost points because %FAILURE_REASON%.

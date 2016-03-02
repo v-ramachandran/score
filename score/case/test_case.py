@@ -1,6 +1,5 @@
 from response_type import ResponseType
 from os import path
-from score.path.file_names import case_name_to_output_name
 
 import requests
 import yaml
@@ -32,13 +31,14 @@ class TestCase(object):
     @classmethod
     def from_yaml_file(cls, url_root, case_filepath, output_directory_path):
         name, extension = path.splitext(case_filepath)
-        output_filename = case_name_to_output_name(path.basename(name))
+        output_filename = "{base}_output.yaml".format(base=path.basename(name))
         output_filepath = path.join(output_directory_path, output_filename)
         case = yaml.load(open(case_filepath))
         return cls(url_root, case, output_filepath)
 
     def evaluate_and_output_results(self):
-        output_dict = {"points_available": self.case["points"], "responses":[]}
+        output_dict = {"points_available": self.case["points"], "responses":[],
+            "goal": literal_str(self.case["goal"])}
         scored_points = self.case["points"]
         for request in self.case["requests"]:
             response_dict = self.__execute_request(request)
@@ -64,7 +64,7 @@ class TestCase(object):
 
         if request.has_key("response_expected"):
             output_dict["response_expected"] = request["response_expected"]["value"]
-            received_response = re.sub("[ ]+\n", '\n', http_response.content)
+            received_response = re.sub("[ \r]+\n", '\n', http_response.content)
             output_dict["response_received"] = received_response
             expected_response_type = request["response_expected"]["type"].lower()
             response_type_cls = ResponseType[expected_response_type].cls

@@ -1,25 +1,34 @@
 #!/usr/bin/env python
-
 from argparse import ArgumentParser
+from contextlib import contextmanager
 from fnmatch import fnmatch
+from glob import glob
 from os import path, listdir
 from score.path.project_structure import ProjectStructure
 from score.case.test_case import TestCase
+import os
+import re
+import subprocess
+import time
 
 def setup_argument_parser():
     parser = ArgumentParser()
-    parser.add_argument("-d", "--directory",
-        help="Specify the directory in the test cases exist. DEFAULT: '.'",
+    parser.add_argument("-r", "--root",
+        help="Specify the root for the execution of test cases. Can be a pattern. DEFAULT: '.'",
         default=".")
     parser.add_argument("-n", "--name",
         help="Specify the name of the test cases folder. DEFAULT: 'tests'",
         default="tests")
-    parser.add_argument("-c", "--case",
-        help="Specify the name of the individual test case to run.",
-        default=None)
+    parser.add_argument("-p", "--prepare",
+        help="Specify a command if a web application needs to be prepared for test.")
+    parser.add_argument("-t", "--timeout",
+        help="Specify the seconds to wait if a web application needs to be prepared. DEFAULT: '60'",
+        default=60)
     parser.add_argument("-u", "--url",
         help="Specify the URL to which requests will be made. DEFAULT: 'http://localhost:8080'",
         default="http://localhost:8080")
+    parser.add_argument("-c", "--case",
+        help="Specify the name of the individual test case to run.")
     return parser.parse_args()
 
 def __has_correct_project_structure(project_root):
@@ -49,27 +58,58 @@ def __has_correct_project_setup(root, name):
         has_correct_setup = False
     return has_correct_setup
 
-def main():
-    parsed_args = setup_argument_parser()
-    if (__has_correct_project_setup(parsed_args.directory, parsed_args.name)):
-        project_root = path.join(parsed_args.directory, parsed_args.name)
-        cases_directory_path = path.join(project_root, ProjectStructure.CASES_DIR)
-        output_directory_path = path.join(project_root, ProjectStructure.OUTPUT_DIR)
+def __execute_tests(submission_root, test_cases_folder, url_root):
+    if (__has_correct_project_setup(submission_root, test_cases_folder)):
+        tests_root = path.join(submission_root, test_cases_folder)
+        cases_directory_path = path.join(tests_root, ProjectStructure.CASES_DIR)
+        output_directory_path = path.join(tests_root, ProjectStructure.OUTPUT_DIR)
         count = 0
-        url_root = parsed_args.url.rstrip("/")
         for case_filename in listdir(cases_directory_path):
             if fnmatch(case_filename, "*.yaml"):
                 print "- Running test case {case}".format(case=case_filename)
                 case_filepath = path.join(cases_directory_path, case_filename)
                 test_case = TestCase.from_yaml_file(url_root, case_filepath, output_directory_path)
                 output_filepath = test_case.evaluate_and_output_results()
-                print "- Finished test case {case}. Wrote results at {output}".format(
-                    case=case_filename, output=output_filepath)
+                print "- Finished test case {case}.".format(case=case_filename)
                 count = count + 1
         print "[SUCCESS] Finished running {count} test cases.".format(count=count)
-        digest_location = output_text_result_digest(output_directory_path)
-        print "[SUCCESS] Finished generating results digest at {location}".format(
-            location=digest_location))
+
+@contextmanager
+def __prepare_for_tests(command, timeout):
+    if command:
+        command_tokens = re.split("[ ]+", command)
+        process = subprocess.Popen(command_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(float(timeout))
+        print "[INFO] Prepared for testing by running '{command}'.".format(command=command)
+        try:
+            yield
+        finally:
+            process.terminate()
+            time.sleep(2)
+            process.kill()
+            time.sleep(2)
+    else:
+        print "[INFO] No prepare command to run prior to testing."
+        yield
+
+def main():
+    parsed_args = setup_argument_parser()
+    pwd = os.getcwd()
+    issues = []
+    for location in glob(parsed_args.root):
+        abs_location = path.abspath(location)
+        os.chdir(abs_location)
+        with __prepare_for_tests(parsed_args.prepare, parsed_args.timeout):
+            try:
+                __execute_tests(abs_location, parsed_args.name, parsed_args.url.rstrip("/"))
+            except Exception as e:
+                print "[ERROR] Unable to run tests at {submission}".format(submission=location)
+                issues.append(location)
+        os.chdir(pwd)
+    if len(issues) != 0:
+        print "[ERROR] Issues running the following submissions:"
+        for issue in issues:
+            print "- {issue}".format(issue=issue)
 
 if __name__ == '__main__':
     main()
